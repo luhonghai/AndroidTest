@@ -33,6 +33,7 @@ import butterknife.OnClick;
 /**
  * Created by luhonghai on 6/16/16.
  * The main activity
+ *
  */
 
 public class MainActivity extends BaseActivity {

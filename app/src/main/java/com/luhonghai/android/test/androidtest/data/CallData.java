@@ -7,6 +7,11 @@ import java.util.Date;
 
 /**
  * Created by luhonghai on 6/16/16.
+ * LiteDB is my open source project, that is available at Maven Central
+ * Quick and easy to create SQLite database on Android project with Annotation
+ * See more at https://github.com/luhonghai/LiteDB
+ *
+ * This class is similar with JDO
  */
 @LiteTable
 public class CallData extends ResponseData {
