@@ -100,19 +100,8 @@ public class MainActivity extends BaseActivity {
 
     @OnClick(R.id.btnRequest)
     public void clickButtonRequest() {
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                LocationService locationService = new LocationService(MainActivity.this);
-                try {
-                    locationService.requestLocation();
-                } catch (IOException | NoNetworkConnectedException | LocationServiceException e) {
-                    Log.e(TAG, "Could not request location", e);
-                }
-                return null;
-            }
-        }.execute();
-
+        Intent service = new Intent(this, LocationService.class);
+        startService(service);
     }
 
     /**

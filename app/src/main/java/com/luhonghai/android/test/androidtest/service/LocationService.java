@@ -1,15 +1,9 @@
 package com.luhonghai.android.test.androidtest.service;
 
-import android.Manifest;
-import android.app.PendingIntent;
-import android.content.Context;
+import android.app.IntentService;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.LocationManager;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
-import com.luhonghai.android.test.androidtest.Constant;
 import com.luhonghai.android.test.androidtest.api.LocationAPI;
 import com.luhonghai.android.test.androidtest.api.LocationAPIFactory;
 import com.luhonghai.android.test.androidtest.data.CallData;
@@ -21,6 +15,7 @@ import com.luhonghai.android.test.androidtest.data.WifiRequestData;
 import com.luhonghai.android.test.androidtest.data.sqlite.dao.CallDataDAO;
 import com.luhonghai.android.test.androidtest.exception.LocationServiceException;
 import com.luhonghai.android.test.androidtest.exception.NoNetworkConnectedException;
+import com.luhonghai.android.test.androidtest.receiver.ConnectivityChangeReceiver;
 import com.luhonghai.android.test.androidtest.utils.NetworkUtils;
 import com.luhonghai.litedb.exception.AnnotationNotFound;
 import com.luhonghai.litedb.exception.InvalidAnnotationData;
@@ -33,22 +28,20 @@ import java.io.IOException;
 /**
  * Created by luhonghai on 6/16/16.
  */
-public class LocationService {
+public class LocationService extends IntentService {
 
     private static final String TAG = "LocationService";
 
-    private final Context context;
-
-    public LocationService(Context context) {
-        this.context = context;
+    public LocationService() {
+        super(LocationService.class.getName());
     }
 
     public void requestLocation() throws IOException, NoNetworkConnectedException, LocationServiceException {
-        LocationAPI locationAPI = LocationAPIFactory.createLocationAPI(context);
+        LocationAPI locationAPI = LocationAPIFactory.createLocationAPI(this);
         RequestData requestData;
-        if (NetworkUtils.isWifiConnected(context)) {
+        if (NetworkUtils.isWifiConnected(this)) {
             requestData = new WifiRequestData();
-        } else if (NetworkUtils.isMobileConnected(context)) {
+        } else if (NetworkUtils.isMobileConnected(this)) {
             requestData = new MobileRequestData();
         } else {
             throw new NoNetworkConnectedException();
@@ -61,7 +54,7 @@ public class LocationService {
                 CallData callData = (CallData) responseData;
                 CallDataDAO dataDAO = null;
                 try {
-                    dataDAO = new CallDataDAO(context);
+                    dataDAO = new CallDataDAO(this);
                     dataDAO.open();
                     dataDAO.insert(callData);
                 } catch (AnnotationNotFound | InvalidAnnotationData | LiteDatabaseException e) {
@@ -81,6 +74,17 @@ public class LocationService {
             }
         } catch (Exception e) {
             throw new LocationServiceException("Location API could not request location", e);
+        }
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        try {
+            requestLocation();
+        } catch (IOException | NoNetworkConnectedException | LocationServiceException e) {
+            Log.e(TAG, "Could not request location", e);
+        } finally {
+            ConnectivityChangeReceiver.completeWakefulIntent(intent);
         }
     }
 }
